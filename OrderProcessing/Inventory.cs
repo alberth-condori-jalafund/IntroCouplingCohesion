@@ -11,27 +11,32 @@ public class Inventory
 
   public bool CheckItemAvailability(string item, int quantity)
   {
+    if (DataValidator.ValidatePositiveNumbers(quantity) == false)
+    {
+      Console.WriteLine("Invalid quantity number");
+      return false;
+    }
     return _stock.ContainsKey(item) && _stock[item] >= quantity;
   }
 
   public void ReserveItem(string item, int quantity)
   {
-    if (_stock.ContainsKey(item))
-    {
-      _stock[item] -= quantity;
-      Console.WriteLine($"Item {item} reserved: {quantity} units.");
-    }
+    _stock[item] -= quantity;
+    Console.WriteLine($"Item {item} reserved: {quantity} units.");
   }
 
   public void RestockItem(string item, int quantity)
   {
-    if (_stock.ContainsKey(item))
+    if (DataValidator.ValidatePositiveNumbers(quantity))
     {
-      _stock[item] += quantity;
-    }
-    else
-    {
-      _stock[item] = quantity;
+      if (_stock.ContainsKey(item))
+      {
+        _stock[item] += quantity;
+      }
+      else
+      {
+        _stock[item] = quantity;
+      }
     }
   }
 }
