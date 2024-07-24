@@ -2,57 +2,64 @@
 
 public class OrderService
 {
-  private Inventory _inventory;
-  
-  private PaymentService _paymentService;
-  
-  private EmailService _emailService;
+    private readonly Inventory _inventory;
+    private readonly PaymentService _paymentService;
+    private readonly EmailService _emailService;
+    private const double UnitPrice = 10; // Assume each item costs 10 per unit
 
-  public OrderService()
-  {
-    _inventory = new();
-    _paymentService = new();
-    _emailService = new();
-  }
-
-  public void ProcessOrder(Customer customer, List<(string item, int quantity)> items)
-  {
-    double totalAmount = 0;
-    bool allItemsAvailable = true;
-
-    foreach (var (item, quantity) in items)
+    public OrderService(Inventory inventory, PaymentService paymentService, EmailService emailService)
     {
-      if (_inventory.CheckItemAvailability(item, quantity))
-      {
-        _inventory.ReserveItem(item, quantity);
-        totalAmount += 10 * quantity; // Assume each item costs 10 per unit
-      }
-      else
-      {
-        allItemsAvailable = false;
-        Console.WriteLine($"Item {item} is not available in the requested quantity.");
-      }
+        _inventory = inventory;
+        _paymentService = paymentService;
+        _emailService = emailService;
     }
 
-    if (allItemsAvailable)
+    public void ProcessOrder(Customer customer, List<(string ItemName, int Quantity)> items)
     {
-      var order = new Order
-      {
-        Customer = customer,
-        Items = new List<string>(items.ConvertAll(i => i.item)),
-        TotalAmount = totalAmount
-      };
+        var order = new Order { Customer = customer };
 
-      if (_paymentService.ProcessPayment(customer, totalAmount))
-      {
+        if (!ValidateAndReserveItems(items, order))
+        {
+            return;
+        }
+
+        if (_paymentService.ProcessPayment(customer, order.TotalAmount))
+        {
+            CompleteOrder(order);
+        }
+        else
+        {
+            FailOrder(order);
+        }
+    }
+
+    private bool ValidateAndReserveItems(List<(string ItemName, int Quantity)> items, Order order)
+    {
+        foreach (var (itemName, quantity) in items)
+        {
+            if (!_inventory.CheckItemAvailability(itemName, quantity))
+            {
+                Console.WriteLine($"Item {itemName} is not available in the requested quantity.");
+                return false;
+            }
+
+            _inventory.ReserveItem(itemName, quantity);
+            order.Items.Add((itemName, quantity));
+            order.TotalAmount += UnitPrice * quantity;
+        }
+
+        return true;
+    }
+
+    private void CompleteOrder(Order order)
+    {
         order.PaymentStatus = "Paid";
-        _emailService.SendOrderConfirmationEmail(customer, order);
-      }
-      else
-      {
-        order.PaymentStatus = "Payment Failed";
-        _emailService.SendPaymentFailedEmail(customer);
-      }
+        _emailService.SendOrderConfirmationEmail(order.Customer, order);
     }
-  }
+
+    private void FailOrder(Order order)
+    {
+        order.PaymentStatus = "Payment Failed";
+        _emailService.SendPaymentFailedEmail(order.Customer);
+    }
 }
