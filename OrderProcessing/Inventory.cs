@@ -2,28 +2,23 @@
 
 public class Inventory
 {
-  private Dictionary<string, int> _stock = new Dictionary<string, int>
-        {
-            { "Item1", 10 },
-            { "Item2", 5 },
-            { "Item3", 20 }
-        };
+  private Dictionary<Item, int> _stock = [];
 
-  public bool CheckItemAvailability(string item, int quantity)
+  public bool CheckItemAvailability(Item item, int quantity)
   {
     return _stock.ContainsKey(item) && _stock[item] >= quantity;
   }
 
-  public void ReserveItem(string item, int quantity)
+  public void ReserveItem(Item item, int quantity)
   {
-    if (_stock.ContainsKey(item))
+    if (CheckItemAvailability(item, quantity))
     {
       _stock[item] -= quantity;
-      Console.WriteLine($"Item {item} reserved: {quantity} units.");
+      Console.WriteLine($"Item {item.Name} reserved: {quantity} units.");
     }
   }
 
-  public void RestockItem(string item, int quantity)
+  public void RestockItem(Item item, int quantity)
   {
     if (_stock.ContainsKey(item))
     {
@@ -33,5 +28,10 @@ public class Inventory
     {
       _stock[item] = quantity;
     }
+  }
+
+  public void AddItem(Item item, int quantity)
+  {
+    _stock.Add(item, quantity);
   }
 }
