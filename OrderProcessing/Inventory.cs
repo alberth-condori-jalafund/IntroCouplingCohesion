@@ -16,7 +16,7 @@ public class Inventory
 
   public void ReserveItem(string item, int quantity)
   {
-    if (_stock.ContainsKey(item))
+    if (CheckItemAvailability(item, quantity))
     {
       _stock[item] -= quantity;
       Console.WriteLine($"Item {item} reserved: {quantity} units.");
