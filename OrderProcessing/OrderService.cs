@@ -2,57 +2,79 @@
 
 public class OrderService
 {
-  private Inventory _inventory;
-  
-  private PaymentService _paymentService;
-  
-  private EmailService _emailService;
+    private readonly Inventory _inventory;
+    private readonly PaymentService _paymentService;
+    private readonly EmailService _emailService;
+    private const double ItemPrice = 10.0;
 
-  public OrderService()
-  {
-    _inventory = new();
-    _paymentService = new();
-    _emailService = new();
-  }
-
-  public void ProcessOrder(Customer customer, List<(string item, int quantity)> items)
-  {
-    double totalAmount = 0;
-    bool allItemsAvailable = true;
-
-    foreach (var (item, quantity) in items)
+    public OrderService(Inventory inventory, PaymentService paymentService, EmailService emailService)
     {
-      if (_inventory.CheckItemAvailability(item, quantity))
-      {
-        _inventory.ReserveItem(item, quantity);
-        totalAmount += 10 * quantity; // Assume each item costs 10 per unit
-      }
-      else
-      {
-        allItemsAvailable = false;
-        Console.WriteLine($"Item {item} is not available in the requested quantity.");
-      }
+        _inventory = inventory;
+        _paymentService = paymentService;
+        _emailService = emailService;
     }
 
-    if (allItemsAvailable)
+    public void ProcessOrder(Customer customer, List<(string item, int quantity)> items)
     {
-      var order = new Order
-      {
-        Customer = customer,
-        Items = new List<string>(items.ConvertAll(i => i.item)),
-        TotalAmount = totalAmount
-      };
+        if (AreAllItemsAvailable(items, out double totalAmount))
+        {
+            var order = CreateOrder(customer, items, totalAmount);
 
-      if (_paymentService.ProcessPayment(customer, totalAmount))
-      {
-        order.PaymentStatus = "Paid";
-        _emailService.SendOrderConfirmationEmail(customer, order);
-      }
-      else
-      {
-        order.PaymentStatus = "Payment Failed";
-        _emailService.SendPaymentFailedEmail(customer);
-      }
+            if (ProcessPayment(customer, order))
+            {
+                _emailService.SendOrderConfirmationEmail(customer, order);
+            }
+            else
+            {
+                _emailService.SendPaymentFailedEmail(customer);
+            }
+        }
     }
-  }
+
+    private bool AreAllItemsAvailable(List<(string item, int quantity)> items, out double totalAmount)
+    {
+        totalAmount = 0;
+        bool allItemsAvailable = true;
+
+        foreach (var (item, quantity) in items)
+        {
+            if (_inventory.CheckItemAvailability(item, quantity))
+            {
+                _inventory.ReserveItem(item, quantity);
+                totalAmount += ItemPrice * quantity;
+            }
+            else
+            {
+                allItemsAvailable = false;
+                Console.WriteLine($"Item {item} is not available in the requested quantity.");
+            }
+        }
+
+        return allItemsAvailable;
+    }
+
+    private Order CreateOrder(Customer customer, List<(string item, int quantity)> items, double totalAmount)
+    {
+        return new Order
+        {
+            Customer = customer,
+            Items = new List<string>(items.ConvertAll(i => i.item)),
+            TotalAmount = totalAmount,
+            PaymentStatus = "Pending"
+        };
+    }
+
+    private bool ProcessPayment(Customer customer, Order order)
+    {
+        if (_paymentService.ProcessPayment(customer, order.TotalAmount))
+        {
+            order.PaymentStatus = "Paid";
+            return true;
+        }
+        else
+        {
+            order.PaymentStatus = "Payment Failed";
+            return false;
+        }
+    }
 }
