@@ -2,17 +2,17 @@
 
 public class OrderService
 {
-  private Inventory _inventory;
+  private readonly Inventory _inventory;
   
-  private PaymentService _paymentService;
+  private readonly PaymentService _paymentService;
   
-  private EmailService _emailService;
+  private readonly EmailService _emailService;
 
-  public OrderService()
+  public OrderService(Inventory inventory, PaymentService paymentService, EmailService emailService)
   {
-    _inventory = new();
-    _paymentService = new();
-    _emailService = new();
+    _inventory = inventory;
+    _paymentService = paymentService;
+    _emailService = emailService;
   }
 
   public void ProcessOrder(Customer customer, List<(string item, int quantity)> items)
