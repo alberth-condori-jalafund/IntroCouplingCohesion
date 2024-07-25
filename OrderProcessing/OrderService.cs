@@ -3,10 +3,11 @@
 public class OrderService
 {
   private Inventory _inventory;
-  
+
   private PaymentService _paymentService;
-  
+
   private EmailService _emailService;
+  private double Unit_Cost = 10;
 
   public OrderService()
   {
@@ -14,45 +15,43 @@ public class OrderService
     _paymentService = new();
     _emailService = new();
   }
-
-  public void ProcessOrder(Customer customer, List<(string item, int quantity)> items)
+  private double OrderAmount( List<(string item, int quantity)> items)
   {
     double totalAmount = 0;
-    bool allItemsAvailable = true;
-
     foreach (var (item, quantity) in items)
     {
       if (_inventory.CheckItemAvailability(item, quantity))
       {
         _inventory.ReserveItem(item, quantity);
-        totalAmount += 10 * quantity; // Assume each item costs 10 per unit
+        totalAmount += Unit_Cost * quantity;
       }
       else
       {
-        allItemsAvailable = false;
-        Console.WriteLine($"Item {item} is not available in the requested quantity.");
+        Console.WriteLine($"Item: {item} is not available in the requested quantity.");
+        return 0;
       }
     }
+    return totalAmount;
+  }
 
-    if (allItemsAvailable)
+  public void ProcessOrder(Customer customer, List<(string item, int quantity)> items)
+  {
+    var order = new Order
     {
-      var order = new Order
-      {
-        Customer = customer,
-        Items = new List<string>(items.ConvertAll(i => i.item)),
-        TotalAmount = totalAmount
-      };
+      Customer = customer,
+      Items = new List<string>(items.ConvertAll(i => i.item)),
+      TotalAmount = OrderAmount(items)
+    };
 
-      if (_paymentService.ProcessPayment(customer, totalAmount))
-      {
-        order.PaymentStatus = "Paid";
-        _emailService.SendOrderConfirmationEmail(customer, order);
-      }
-      else
-      {
-        order.PaymentStatus = "Payment Failed";
-        _emailService.SendPaymentFailedEmail(customer);
-      }
+    if (_paymentService.ProcessPayment(customer, order.TotalAmount) && order.TotalAmount != 0)
+    {
+      order.PaymentStatus = "Paid";
+      _emailService.SendOrderConfirmationEmail(customer, order);
+    }
+    else
+    {
+      order.PaymentStatus = "Payment Failed";
+      _emailService.SendPaymentFailedEmail(customer, order);
     }
   }
 }
