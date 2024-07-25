@@ -1,4 +1,4 @@
-﻿namespace OrderProcessing;
+﻿namespace OrderProcessing.Models;
 
 public class Inventory
 {
