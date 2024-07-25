@@ -1,4 +1,4 @@
-﻿namespace OrderProcessing;
+﻿namespace OrderProcessing.Models;
 
 public class Order
 {
@@ -9,4 +9,11 @@ public class Order
   public double TotalAmount { get; set; }
   
   public string PaymentStatus { get; set; }
+
+  public Order(Customer customer, List<string> items, double totalAmount)
+  {
+    Customer = customer;
+    Items = items;
+    TotalAmount = totalAmount;
+  }
 }

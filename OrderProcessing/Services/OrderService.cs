@@ -1,4 +1,5 @@
 ﻿namespace OrderProcessing;
+using OrderProcessing.Models;
 
 public class OrderService
 {
@@ -15,7 +16,7 @@ public class OrderService
     _emailService = new();
   }
 
-  public void ProcessOrder(Customer customer, List<(string item, int quantity)> items)
+  public void ProcessOrder(Customer customer, List<(string item, int quantity)> items, Order order)
   {
     double totalAmount = 0;
     bool allItemsAvailable = true;
@@ -36,11 +37,10 @@ public class OrderService
 
     if (allItemsAvailable)
     {
-      var order = new Order
       {
-        Customer = customer,
-        Items = new List<string>(items.ConvertAll(i => i.item)),
-        TotalAmount = totalAmount
+        order.Customer = customer;
+        order.Items = new List<string>(items.ConvertAll(i => i.item));
+        order.TotalAmount = totalAmount;
       };
 
       if (_paymentService.ProcessPayment(customer, totalAmount))

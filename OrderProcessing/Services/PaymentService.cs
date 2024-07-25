@@ -1,5 +1,5 @@
 ﻿namespace OrderProcessing;
-
+using OrderProcessing.Models;
 public class PaymentService
 {
   public bool ProcessPayment(Customer customer, double amount)
