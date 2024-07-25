@@ -2,57 +2,65 @@
 
 public class OrderService
 {
-  private Inventory _inventory;
-  
-  private PaymentService _paymentService;
-  
-  private EmailService _emailService;
+    private Inventory _inventory;
 
-  public OrderService()
-  {
-    _inventory = new();
-    _paymentService = new();
-    _emailService = new();
-  }
+    private PaymentService _paymentService;
 
-  public void ProcessOrder(Customer customer, List<(string item, int quantity)> items)
-  {
-    double totalAmount = 0;
-    bool allItemsAvailable = true;
+    private EmailService _emailService;
 
-    foreach (var (item, quantity) in items)
+    public OrderService()
     {
-      if (_inventory.CheckItemAvailability(item, quantity))
-      {
-        _inventory.ReserveItem(item, quantity);
-        totalAmount += 10 * quantity; // Assume each item costs 10 per unit
-      }
-      else
-      {
-        allItemsAvailable = false;
-        Console.WriteLine($"Item {item} is not available in the requested quantity.");
-      }
+        _inventory = new();
+        _paymentService = new();
+        _emailService = new();
     }
 
-    if (allItemsAvailable)
+    public void ProcessOrder(Customer customer, List<(string item, int quantity)> items)
     {
-      var order = new Order
-      {
-        Customer = customer,
-        Items = new List<string>(items.ConvertAll(i => i.item)),
-        TotalAmount = totalAmount
-      };
+        if (!_inventory.AreAllItemsAvailable(items))
+        {
+            Console.WriteLine("Not all items are available in the requested quantities.");
+            return;
+        }
 
-      if (_paymentService.ProcessPayment(customer, totalAmount))
-      {
-        order.PaymentStatus = "Paid";
-        _emailService.SendOrderConfirmationEmail(customer, order);
-      }
-      else
-      {
-        order.PaymentStatus = "Payment Failed";
-        _emailService.SendPaymentFailedEmail(customer);
-      }
+        double totalAmount = ReserveItemsAndCalculateTotal(items);
+
+        var order = CreateOrder(customer, items, totalAmount);
+        ProcessPayment(order);
     }
-  }
+
+    private double ReserveItemsAndCalculateTotal(List<(string item, int quantity)> items)
+    {
+        double totalAmount = 0;
+        foreach (var (item, quantity) in items)
+        {
+            _inventory.ReserveItem(item, quantity);
+            totalAmount += 10 * quantity; // Assume each item costs 10 per unit
+        }
+        return totalAmount;
+    }
+
+    private Order CreateOrder(Customer customer, List<(string item, int quantity)> items, double totalAmount)
+    {
+        return new Order
+        {
+            Customer = customer,
+            Items = new List<string>(items.ConvertAll(i => i.item)),
+            TotalAmount = totalAmount
+        };
+    }
+
+    private void ProcessPayment(Order order)
+    {
+        if (_paymentService.ProcessPayment(order.Customer, order.TotalAmount))
+        {
+            order.PaymentStatus = "Paid";
+            _emailService.SendOrderConfirmationEmail(order.Customer, order);
+        }
+        else
+        {
+            order.PaymentStatus = "Payment Failed";
+            _emailService.SendPaymentFailedEmail(order.Customer);
+        }
+    }
 }
