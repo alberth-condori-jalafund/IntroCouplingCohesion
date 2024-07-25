@@ -2,46 +2,25 @@
 
 public class OrderService
 {
-  private Inventory _inventory;
+  private const float ItemCost = 10;
+  private readonly Inventory _inventory;
   
-  private PaymentService _paymentService;
+  private readonly PaymentService _paymentService;
   
-  private EmailService _emailService;
+  private readonly EmailService _emailService;
 
   public OrderService()
   {
-    _inventory = new();
-    _paymentService = new();
-    _emailService = new();
+    _inventory = new Inventory();
+    _paymentService = new PaymentService();
+    _emailService = new EmailService();
   }
 
-  public void ProcessOrder(Customer customer, List<(string item, int quantity)> items)
+public void ProcessOrder(Customer customer, List<(string item, int quantity)> items)
   {
-    double totalAmount = 0;
-    bool allItemsAvailable = true;
-
-    foreach (var (item, quantity) in items)
+    if (CheckAndReserveItems(items, out double totalAmount))
     {
-      if (_inventory.CheckItemAvailability(item, quantity))
-      {
-        _inventory.ReserveItem(item, quantity);
-        totalAmount += 10 * quantity; // Assume each item costs 10 per unit
-      }
-      else
-      {
-        allItemsAvailable = false;
-        Console.WriteLine($"Item {item} is not available in the requested quantity.");
-      }
-    }
-
-    if (allItemsAvailable)
-    {
-      var order = new Order
-      {
-        Customer = customer,
-        Items = new List<string>(items.ConvertAll(i => i.item)),
-        TotalAmount = totalAmount
-      };
+      var order = CreateOrder(customer, items, totalAmount);
 
       if (_paymentService.ProcessPayment(customer, totalAmount))
       {
@@ -55,4 +34,37 @@ public class OrderService
       }
     }
   }
+
+  private bool CheckAndReserveItems(List<(string item, int quantity)> items, out double totalAmount)
+  {
+    totalAmount = 0;
+    bool allItemsAvailable = true;
+
+    foreach (var (item, quantity) in items)
+    {
+      if (_inventory.CheckItemAvailability(item, quantity))
+      {
+        _inventory.ReserveItem(item, quantity);
+        totalAmount += ItemCost * quantity; // Assume each item costs 10 per unit
+      }
+      else
+      {
+        allItemsAvailable = false;
+        Console.WriteLine($"Item {item} is not available in the requested quantity.");
+      }
+    }
+
+    return allItemsAvailable;
+  }
+
+  private Order CreateOrder(Customer customer, List<(string item, int quantity)> items, double totalAmount)
+  {
+    return new Order
+    {
+      Customer = customer,
+      Items = new List<string>(items.ConvertAll(i => i.item)),
+      TotalAmount = totalAmount
+    };
+  }
+
 }

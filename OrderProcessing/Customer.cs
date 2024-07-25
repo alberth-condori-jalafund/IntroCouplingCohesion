@@ -2,9 +2,27 @@
 
 public class Customer
 {
-  public string Name { get; set; }
-  
-  public string Email { get; set; }
-  
-  public string Address { get; set; }
+  private string _name;
+  private string _email;
+  private string _address;
+
+  public Customer(string name, string email, string address)
+  {
+    _name = name;
+    _email = email;
+    _address = address;
+  }
+
+  public string getName()
+  {
+    return _name;
+  }
+  public string getEmail()
+  {
+    return _email;
+  }
+  public string getAddress()
+  {
+    return _address;
+  }
 }
