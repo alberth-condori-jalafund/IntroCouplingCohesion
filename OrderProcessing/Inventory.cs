@@ -2,7 +2,7 @@
 
 public class Inventory
 {
-    private Dictionary<string, int> _stock;
+    private readonly Dictionary<string, int> _stock;
 
     public Inventory()
     {
@@ -26,5 +26,18 @@ public class Inventory
             _stock[item] -= quantity;
             Console.WriteLine($"Item {item} reserved: {quantity} units.");
         }
+    }
+
+    public bool AreAllItemsAvailable(List<(string item, int quantity)> items)
+    {
+        foreach (var (item, quantity) in items)
+        {
+            if (!CheckItemAvailability(item, quantity))
+            {
+                Console.WriteLine($"Item {item} is not available in the requested quantity.");
+                return false;
+            }
+        }
+        return true;
     }
 }
