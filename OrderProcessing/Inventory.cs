@@ -23,15 +23,5 @@ public class Inventory
     }
   }
 
-  public void RestockItem(string item, int quantity)
-  {
-    if (_stock.ContainsKey(item))
-    {
-      _stock[item] += quantity;
-    }
-    else
-    {
-      _stock[item] = quantity;
-    }
-  }
+  // delete RestockItem method
 }
