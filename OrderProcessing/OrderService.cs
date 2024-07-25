@@ -2,45 +2,36 @@
 
 public class OrderService
 {
-  private Inventory _inventory;
+  private readonly Inventory _inventory;
   
-  private PaymentService _paymentService;
+  private readonly IPaymentService _paymentService;
   
-  private EmailService _emailService;
+  private readonly IEmailService _emailService;
 
-  public OrderService()
+  public OrderService(IPaymentService paymentService, IEmailService emailService)
   {
     _inventory = new();
-    _paymentService = new();
-    _emailService = new();
+    _paymentService = paymentService;
+    _emailService = emailService;
   }
 
-  public void ProcessOrder(Customer customer, List<(string item, int quantity)> items)
+  public void ProcessOrder(Customer customer, List<RequestOrderItem> items)
   {
     double totalAmount = 0;
     bool allItemsAvailable = true;
 
-    foreach (var (item, quantity) in items)
+    foreach (var item in items)
     {
-      if (_inventory.CheckItemAvailability(item, quantity))
-      {
-        _inventory.ReserveItem(item, quantity);
-        totalAmount += 10 * quantity; // Assume each item costs 10 per unit
-      }
-      else
-      {
-        allItemsAvailable = false;
-        Console.WriteLine($"Item {item} is not available in the requested quantity.");
-      }
+      allItemsAvailable &= _inventory.TryReserveItem(item);
     }
 
     if (allItemsAvailable)
     {
       var order = new Order
       {
-        Customer = customer,
-        Items = new List<string>(items.ConvertAll(i => i.item)),
-        TotalAmount = totalAmount
+        // Customer = customer,
+        // Items = new List<string>(items.ConvertAll(i => i.item)),
+        // TotalAmount = totalAmount
       };
 
       if (_paymentService.ProcessPayment(customer, totalAmount))

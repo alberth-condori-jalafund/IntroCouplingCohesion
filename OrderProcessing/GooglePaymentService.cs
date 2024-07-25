@@ -1,6 +1,6 @@
 ﻿namespace OrderProcessing;
 
-public class PaymentService
+public class GooglePaymentService : IPaymentService
 {
   public bool ProcessPayment(Customer customer, double amount)
   {

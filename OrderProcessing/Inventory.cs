@@ -1,37 +1,58 @@
 ﻿namespace OrderProcessing;
 
-public class Inventory
+public class Inventory : IInventoryService
 {
-  private Dictionary<string, int> _stock = new Dictionary<string, int>
-        {
-            { "Item1", 10 },
-            { "Item2", 5 },
-            { "Item3", 20 }
-        };
-
-  public bool CheckItemAvailability(string item, int quantity)
-  {
-    return _stock.ContainsKey(item) && _stock[item] >= quantity;
-  }
-
-  public void ReserveItem(string item, int quantity)
-  {
-    if (_stock.ContainsKey(item))
+  private readonly List<StockOrderItem> _stock =
+  [
+    new()
     {
-      _stock[item] -= quantity;
-      Console.WriteLine($"Item {item} reserved: {quantity} units.");
+      ItemName = "Item1",
+      Quantity = 10,
+      UnitPrice = 12
+    },
+    new()
+    {
+      ItemName = "Item2",
+      Quantity = 20,
+      UnitPrice = 24
+    },
+    new()
+    {
+      ItemName = "Item3",
+      Quantity = 30,
+      UnitPrice = 48
     }
-  }
+  ];
 
-  public void RestockItem(string item, int quantity)
+  public List<StockOrderItem> Stock { get => _stock; }
+
+  public bool TryReserveItem(RequestOrderItem item)
   {
-    if (_stock.ContainsKey(item))
+    var itemAvailability = CheckItemAvailability(item);
+
+    if (itemAvailability)
     {
-      _stock[item] += quantity;
+      var itemToTake = _stock.FirstOrDefault(stockItem => stockItem.ItemName == item.ItemName);
+      itemToTake.Quantity -= item.Quantity;
+      Console.WriteLine($"Item {itemToTake.ItemName} reserved: {item.Quantity} units.");
     }
     else
     {
-      _stock[item] = quantity;
+      Console.WriteLine($"Item {item} is not available in the requested quantity.");
     }
+
+    return itemAvailability;
+  }
+
+  public bool CheckItemAvailability(RequestOrderItem item)
+  {
+    var itemToCheck = _stock.FirstOrDefault(stockItem => stockItem.ItemName == item.ItemName);
+
+    if (itemToCheck == null)
+    {
+      throw new ArgumentException("The item doesn't exists.");
+    }
+    
+    return itemToCheck.Quantity >= item.Quantity;
   }
 }
