@@ -1,6 +1,6 @@
 ﻿namespace OrderProcessing;
 
-public class EmailService
+public class EmailService : IEmailService
 {
   public void SendOrderConfirmationEmail(Customer customer, Order order)
   {
