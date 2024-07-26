@@ -6,8 +6,12 @@ public class Program
   {
     // High cohesion and low coupling
     // Modularization
+    
+    // Configuration
     var paymentService = new GooglePaymentService();
     var emailService = new TwilioEmailService();
+
+    // Data setting
     var customer = new Customer { Name = "Alberth Condori", Email = "alberth.condori@example.com", Address = "123 Main St" };
     var items = new List<RequestOrderItem>
     {
@@ -27,6 +31,8 @@ public class Program
         Quantity = 2
       }
     };
+
+    // Usage
     var orderService = new OrderService(paymentService, emailService);
     orderService.ProcessOrder(customer, items);
   }

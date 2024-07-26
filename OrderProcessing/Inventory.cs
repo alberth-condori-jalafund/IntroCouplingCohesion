@@ -1,6 +1,6 @@
 ﻿namespace OrderProcessing;
 
-public class Inventory : IInventoryService
+public class Inventory
 {
   private readonly List<StockOrderItem> _stock =
   [
@@ -26,13 +26,39 @@ public class Inventory : IInventoryService
 
   public List<StockOrderItem> Stock { get => _stock; }
 
-  public bool TryReserveItem(RequestOrderItem item)
+  public (bool areAllItemsAvailable, decimal totalAmount) TryReserveItems(List<RequestOrderItem> items)
   {
-    var itemAvailability = CheckItemAvailability(item);
+    var areAllItemsAvailable = true;
+    decimal totalAmount = 0;
 
-    if (itemAvailability)
+    foreach (var item in items)
     {
-      var itemToTake = _stock.FirstOrDefault(stockItem => stockItem.ItemName == item.ItemName);
+      var (isItemReserved, unitPrice) = TryReserveItem(item);
+
+      if (isItemReserved) 
+      {
+        totalAmount += unitPrice;
+      }
+      else 
+      {
+        areAllItemsAvailable = false;
+        totalAmount = 0;
+        break;
+      }
+    }
+
+    return (areAllItemsAvailable, totalAmount);
+  }
+
+  public (bool isItemReserved, decimal unitPrice) TryReserveItem(RequestOrderItem item)
+  {
+    var isItemReserved = false;
+    decimal unitPrice = 0;
+
+    if (TryGetStockOrder(item, out var itemToTake))
+    {
+      isItemReserved = true;
+      unitPrice = itemToTake.UnitPrice;
       itemToTake.Quantity -= item.Quantity;
       Console.WriteLine($"Item {itemToTake.ItemName} reserved: {item.Quantity} units.");
     }
@@ -41,18 +67,24 @@ public class Inventory : IInventoryService
       Console.WriteLine($"Item {item} is not available in the requested quantity.");
     }
 
-    return itemAvailability;
+    return (isItemReserved, unitPrice);
   }
 
-  public bool CheckItemAvailability(RequestOrderItem item)
+  public bool TryGetStockOrder(RequestOrderItem item, out StockOrderItem stockOrderItem)
   {
+    var isItemAvailable = false;
     var itemToCheck = _stock.FirstOrDefault(stockItem => stockItem.ItemName == item.ItemName);
 
-    if (itemToCheck == null)
+    if (itemToCheck is not null) 
     {
-      throw new ArgumentException("The item doesn't exists.");
+      stockOrderItem = itemToCheck;
+      isItemAvailable = itemToCheck.Quantity >= item.Quantity;
     }
-    
-    return itemToCheck.Quantity >= item.Quantity;
+    else 
+    {
+      stockOrderItem = null;
+    }
+
+    return isItemAvailable;
   }
 }

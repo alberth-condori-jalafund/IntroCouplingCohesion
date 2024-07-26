@@ -2,5 +2,5 @@
 
 public interface IPaymentService
 {
-  bool ProcessPayment(Customer customer, double amount);
+  bool ProcessPayment(Customer customer, decimal amount);
 }
