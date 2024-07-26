@@ -1,8 +1,8 @@
 ﻿namespace OrderProcessing;
 
-public class PaymentService
+public class GooglePaymentService : IPaymentService
 {
-  public bool ProcessPayment(Customer customer, double amount)
+  public bool ProcessPayment(Customer customer, decimal amount)
   {
     Console.WriteLine($"Processing payment for {customer.Name} of amount {amount}");
     

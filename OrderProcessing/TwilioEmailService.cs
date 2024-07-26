@@ -1,6 +1,6 @@
 ﻿namespace OrderProcessing;
 
-public class EmailService
+public class TwilioEmailService : IEmailService
 {
   public void SendOrderConfirmationEmail(Customer customer, Order order)
   {

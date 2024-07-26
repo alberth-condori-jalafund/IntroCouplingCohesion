@@ -2,57 +2,47 @@
 
 public class OrderService
 {
-  private Inventory _inventory;
-  
-  private PaymentService _paymentService;
-  
-  private EmailService _emailService;
+  private readonly Inventory _inventory;
 
-  public OrderService()
+  private readonly IPaymentService _paymentService;
+
+  private readonly IEmailService _emailService;
+
+  public OrderService(IPaymentService paymentService, IEmailService emailService)
   {
     _inventory = new();
-    _paymentService = new();
-    _emailService = new();
+    _paymentService = paymentService;
+    _emailService = emailService;
   }
 
-  public void ProcessOrder(Customer customer, List<(string item, int quantity)> items)
+  public void ProcessOrder(Customer customer, List<RequestOrderItem> items)
   {
-    double totalAmount = 0;
-    bool allItemsAvailable = true;
+    var (areAllItemsAvailable, totalAmount) = _inventory.TryReserveItems(items);
 
-    foreach (var (item, quantity) in items)
-    {
-      if (_inventory.CheckItemAvailability(item, quantity))
-      {
-        _inventory.ReserveItem(item, quantity);
-        totalAmount += 10 * quantity; // Assume each item costs 10 per unit
-      }
-      else
-      {
-        allItemsAvailable = false;
-        Console.WriteLine($"Item {item} is not available in the requested quantity.");
-      }
-    }
-
-    if (allItemsAvailable)
+    if (areAllItemsAvailable)
     {
       var order = new Order
       {
         Customer = customer,
-        Items = new List<string>(items.ConvertAll(i => i.item)),
+        Items = new List<string>(items.ConvertAll(item => item.ItemName)),
         TotalAmount = totalAmount
       };
 
-      if (_paymentService.ProcessPayment(customer, totalAmount))
-      {
-        order.PaymentStatus = "Paid";
-        _emailService.SendOrderConfirmationEmail(customer, order);
-      }
-      else
-      {
-        order.PaymentStatus = "Payment Failed";
-        _emailService.SendPaymentFailedEmail(customer);
-      }
+      SendOrderProtocols(customer, order, totalAmount);
+    }
+  }
+
+  private void SendOrderProtocols(Customer customer, Order order, decimal totalAmount)
+  {
+    if (_paymentService.ProcessPayment(customer, totalAmount))
+    {
+      order.PaymentStatus = "Paid";
+      _emailService.SendOrderConfirmationEmail(customer, order);
+    }
+    else
+    {
+      order.PaymentStatus = "Payment Failed";
+      _emailService.SendPaymentFailedEmail(customer);
     }
   }
 }

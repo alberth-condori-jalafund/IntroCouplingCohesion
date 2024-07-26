@@ -6,7 +6,7 @@ public class Order
   
   public List<string> Items { get; set; }
   
-  public double TotalAmount { get; set; }
+  public decimal TotalAmount { get; set; }
   
   public string PaymentStatus { get; set; }
 }
