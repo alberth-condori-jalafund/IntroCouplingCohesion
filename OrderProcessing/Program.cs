@@ -1,12 +1,29 @@
-﻿namespace OrderProcessing;
-
-public class Program
+﻿namespace OrderProcessing
 {
-  public static void Main()
+  using OrderProcessing.Interfaces;
+  using OrderProcessing.Models;
+  using OrderProcessing.Services;
+  using System;
+  using System.Collections.Generic;
+
+  public class Program
   {
-    var customer = new Customer { Name = "Alberth Condori", Email = "alberth.condori@example.com", Address = "123 Main St" };
-    var items = new List<(string, int)> { ("Item1", 2), ("Item2", 1), ("Item3", 1) };
-    var orderService = new OrderService();
-    orderService.ProcessOrder(customer, items);
+    public static void Main(string[] args)
+    {
+      IInventory inventory = new Inventory();
+      IPaymentService paymentService = new PaymentService();
+      IEmailService emailService = new EmailService();
+      var orderService = new OrderService(inventory, paymentService, emailService);
+
+      var customer = new Customer("John Doe", "john@example.com", "123 Main St");
+      var items = new List<(string item, int quantity)>
+            {
+                ("Item1", 2),
+                ("Item2", 1),
+                ("Item3", 5)
+            };
+
+      orderService.ProcessOrder(customer, items);
+    }
   }
 }
